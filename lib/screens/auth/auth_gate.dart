@@ -1,4 +1,6 @@
- import 'package:flutter/material.dart';
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
@@ -12,7 +14,10 @@ class AuthGate extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, auth, child) {
+        print('DEBUG: AuthGate - isLoading: ${auth.isLoading}, isAuthenticated: ${auth.isAuthenticated}, user: ${auth.user?.email}');
+        
         if (auth.isLoading) {
+          print('DEBUG: AuthGate - Showing loading screen');
           return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
@@ -21,9 +26,11 @@ class AuthGate extends StatelessWidget {
         }
 
         if (auth.isAuthenticated) {
+          print('DEBUG: AuthGate - User authenticated, navigating to HomePage');
           return const HomePage();
         }
 
+        print('DEBUG: AuthGate - User not authenticated, showing LoginScreen');
         return const LoginScreen();
       },
     );

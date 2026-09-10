@@ -1,6 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:product_au/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -18,7 +19,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -27,120 +27,88 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _confirmPasswordController.dispose();
     super.dispose();
   }
+Future<void> _register() async {
+  if (!_formKey.currentState!.validate()) return;
 
-  Future<void> _register() async {
-    if (!_formKey.currentState!.validate()) return;
+  final authProvider = Provider.of<AuthProvider>(
+    context,
+    listen: false,
+  );
 
-    setState(() {
-      _isLoading = true;
-    });
+  print(
+    'DEBUG: Before register - '
+    'isAuthenticated: ${authProvider.isAuthenticated}',
+  );
 
-    try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
+  final success = await authProvider.register(
+    email: _emailController.text.trim(),
+    password: _passwordController.text,
+  );
 
-      // Firebase authentication state will automatically
-      // take the user to HomeScreen.
-    } on FirebaseAuthException catch (e) {
-      String message;
+  print(
+    'DEBUG: After register - '
+    'success: $success, '
+    'isAuthenticated: ${authProvider.isAuthenticated}',
+  );
 
-      switch (e.code) {
-        case 'email-already-in-use':
-          message =
-              'An account already exists with this email.';
-          break;
-
-        case 'invalid-email':
-          message = 'Please enter a valid email address.';
-          break;
-
-        case 'weak-password':
-          message =
-              'Password is too weak. Use at least 6 characters.';
-          break;
-
-        case 'network-request-failed':
-          message =
-              'Please check your internet connection.';
-          break;
-
-        case 'operation-not-allowed':
-          message =
-              'Email/password authentication is not enabled.';
-          break;
-
-        default:
-          message =
-              'Something went wrong. Please try again.';
-      }
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          behavior: SnackBarBehavior.floating,
+  if (!success && mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          authProvider.errorMessage ??
+              'Registration failed. Please try again.',
         ),
-      );
-    } catch (_) {
-      if (!mounted) return;
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Something went wrong. Please try again.',
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    return;
   }
 
+  // Registration successful
+  if (success && mounted) {
+    Navigator.pop(context);
+  }
+}
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F7FC),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 40,
-            ),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 460,
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: const Color(0xFFE5DDF7),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 30,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        return Scaffold(
+          backgroundColor: const Color(0xFFF8F7FC),
+          body: SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 40,
                 ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 460,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(32),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: const Color(0xFFE5DDF7),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 30,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
                         child: Container(
                           width: 58,
                           height: 58,
@@ -319,7 +287,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           child: ElevatedButton(
                             onPressed:
-                                _isLoading ? null : _register,
+                                authProvider.isLoading ? null : _register,
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
                                   Colors.transparent,
@@ -331,7 +299,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     BorderRadius.circular(12),
                               ),
                             ),
-                            child: _isLoading
+                            child: authProvider.isLoading
                                 ? const SizedBox(
                                     width: 22,
                                     height: 22,
@@ -391,8 +359,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
           ),
-        ),
-      ),
+          )));
+      },
     );
   }
 

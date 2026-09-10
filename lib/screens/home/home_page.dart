@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:product_au/screens/home/favorite_screen.dart';
 import 'package:product_au/screens/home/product_details_screen.dart';
@@ -23,7 +24,10 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
 
+    print('DEBUG: HomePage initState called');
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      print('DEBUG: HomePage loading products');
       context.read<ProductProvider>().loadProducts();
     });
   }
@@ -84,6 +88,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    print('DEBUG: HomePage build method called');
     return Scaffold(
       backgroundColor: const Color(0xFFF8F7FC),
 

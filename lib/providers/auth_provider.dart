@@ -4,8 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:product_au/services/auth_services.dart';
 
-
-
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService;
 
@@ -29,16 +27,25 @@ class AuthProvider extends ChangeNotifier {
 
   String? get errorMessage => _errorMessage;
 
+
   void _listenToAuthChanges() {
-    _authSubscription =
-        _authService.authStateChanges.listen(
+    _authSubscription = _authService.authStateChanges.listen(
       (User? user) {
+        debugPrint(
+          '🔥 Firebase Auth State: ${user?.email ?? "SIGNED OUT"}',
+        );
+
         _user = user;
         _isLoading = false;
+        _errorMessage = null;
 
         notifyListeners();
       },
-      onError: (_) {
+      onError: (Object error) {
+        debugPrint(
+          '🔥 Firebase Auth State Error: $error',
+        );
+
         _isLoading = false;
         _errorMessage =
             'Unable to check authentication status.';
@@ -47,6 +54,8 @@ class AuthProvider extends ChangeNotifier {
       },
     );
   }
+
+
 
   Future<bool> login({
     required String email,
@@ -58,24 +67,45 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _authService.login(
-        email: email,
+      debugPrint('🔥 Login attempt: ${email.trim()}');
+
+      final credential = await _authService.login(
+        email: email.trim(),
         password: password,
       );
 
-      return true;
+      _user = credential.user;
+
+      debugPrint(
+        '🔥 Login successful: ${_user?.email}',
+      );
+
+      return _user != null;
     } on FirebaseAuthException catch (e) {
+      debugPrint(
+        '🔥 Firebase Login Error: ${e.code} - ${e.message}',
+      );
+
       _errorMessage = _getErrorMessage(e);
+
       return false;
-    } catch (_) {
+    } catch (e) {
+      debugPrint(
+        '🔥 Login Error: $e',
+      );
+
       _errorMessage =
           'Something went wrong. Please try again.';
+
       return false;
     } finally {
       _isLoading = false;
+
       notifyListeners();
     }
   }
+
+
 
   Future<bool> register({
     required String email,
@@ -87,30 +117,78 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _authService.register(
-        email: email,
+      debugPrint(
+        '🔥 Registration attempt: ${email.trim()}',
+      );
+
+      final credential = await _authService.register(
+        email: email.trim(),
         password: password,
       );
 
-      return true;
+      _user = credential.user;
+
+      debugPrint(
+        '🔥 Registration successful: ${_user?.email}',
+      );
+
+      return _user != null;
     } on FirebaseAuthException catch (e) {
+      debugPrint(
+        '🔥 Firebase Registration Error: '
+        '${e.code} - ${e.message}',
+      );
+
       _errorMessage = _getErrorMessage(e);
+
       return false;
-    } catch (_) {
+    } catch (e) {
+      debugPrint(
+        '🔥 Registration Error: $e',
+      );
+
       _errorMessage =
           'Something went wrong. Please try again.';
+
       return false;
     } finally {
       _isLoading = false;
+
       notifyListeners();
     }
   }
 
+
+
   Future<bool> logout() async {
     try {
+      debugPrint('🔥 Logout started');
+
       await _authService.logout();
+
+      _user = null;
+
+      debugPrint('🔥 Logout successful');
+
+      notifyListeners();
+
       return true;
-    } catch (_) {
+    } on FirebaseAuthException catch (e) {
+      debugPrint(
+        '🔥 Firebase Logout Error: ${e.code} - ${e.message}',
+      );
+
+      _errorMessage =
+          'Unable to logout. Please try again.';
+
+      notifyListeners();
+
+      return false;
+    } catch (e) {
+      debugPrint(
+        '🔥 Logout Error: $e',
+      );
+
       _errorMessage =
           'Unable to logout. Please try again.';
 
@@ -120,9 +198,15 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+
+
   String _getErrorMessage(
     FirebaseAuthException e,
   ) {
+    debugPrint(
+      '🔥 Firebase error code: ${e.code}',
+    );
+
     switch (e.code) {
       case 'invalid-credential':
       case 'wrong-password':
@@ -148,21 +232,28 @@ class AuthProvider extends ChangeNotifier {
         return 'This account has been disabled.';
 
       case 'operation-not-allowed':
-        return 'Email/password authentication is not enabled.';
+        return 'Email/password authentication is not enabled in Firebase.';
 
       default:
-        return 'Authentication failed. Please try again.';
+        return e.message ??
+            'Authentication failed. Please try again.';
     }
   }
 
+
+
   void clearError() {
     _errorMessage = null;
+
     notifyListeners();
   }
+
+
 
   @override
   void dispose() {
     _authSubscription?.cancel();
+
     super.dispose();
   }
 }
