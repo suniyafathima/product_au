@@ -423,30 +423,30 @@ class _HomePageState extends State<HomePage> {
                           isFavorite: provider.isFavorite(
                             product.id,
                           ),
-                         onFavorite: () {
-                          final bool wasFavorite =
-                              provider.isFavorite(product.id);
+                        onFavorite: () {
+                        final bool wasFavorite =
+                            provider.isFavorite(product.id);
 
-                          provider.toggleFavorite(product.id);
+                        provider.toggleFavorite(product.id);
 
-                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                wasFavorite
-                                    ? 'Removed from favorites'
-                                    : 'Added to favorites',
-                              ),
-                              duration: const Duration(seconds: 2),
-                              behavior: SnackBarBehavior.floating,
-                              margin: const EdgeInsets.all(16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              wasFavorite
+                                  ? 'Removed from favorites'
+                                  : 'Added to favorites',
                             ),
-                          );
-                        },
+                            duration: const Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                            margin: const EdgeInsets.all(16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        );
+                      },
                         ),
                       );
                       },

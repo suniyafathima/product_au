@@ -6,9 +6,25 @@ import '../../models/product.dart';
 import '../../providers/product_provider.dart';
 import 'product_details_screen.dart';
 
-class FavoritesScreen extends StatelessWidget {
+class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
 
+  @override
+  State<FavoritesScreen> createState() => _FavoritesScreenState();
+}
+
+class _FavoritesScreenState extends State<FavoritesScreen> {
+   @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<ProductProvider>();
+
+    
+      provider.loadProductsIfNeeded();
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,6 +53,8 @@ class FavoritesScreen extends StatelessWidget {
             color: const Color(0xFF222222),
           ),
         ),
+        
+       
       ),
 
       body: SafeArea(
@@ -46,6 +64,16 @@ class FavoritesScreen extends StatelessWidget {
             provider,
             child,
           ) {
+            // --------------------------------------------------
+            // LOADING STATE
+            // --------------------------------------------------
+            
+            if (provider.isLoading && provider.products.isEmpty) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+
             final favorites =
                 provider.favoriteProducts;
 
@@ -133,9 +161,6 @@ class FavoritesScreen extends StatelessWidget {
   }
 
   // ==========================================================
-  // HEADER
-  // ==========================================================
-
   Widget _buildHeader(
     int count,
     double width,
@@ -226,9 +251,6 @@ class FavoritesScreen extends StatelessWidget {
   }
 
   // ==========================================================
-  // GRID
-  // ==========================================================
-
   Widget _buildFavoriteGrid(
     BuildContext context,
     List<Product> favorites,
@@ -315,9 +337,6 @@ class FavoritesScreen extends StatelessWidget {
   }
 
   // ==========================================================
-  // RESPONSIVE COLUMNS
-  // ==========================================================
-
   int _getCrossAxisCount(
     double width,
   ) {
@@ -337,9 +356,6 @@ class FavoritesScreen extends StatelessWidget {
   }
 
   // ==========================================================
-  // RESPONSIVE CARD HEIGHT
-  // ==========================================================
-
   double _getCardHeight(
     double width,
   ) {
@@ -359,9 +375,6 @@ class FavoritesScreen extends StatelessWidget {
   }
 
   // ==========================================================
-  // EMPTY STATE
-  // ==========================================================
-
   Widget _buildEmptyState(
     BuildContext context,
   ) {
