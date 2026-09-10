@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:product_au/screens/home/favorite_screen.dart';
+import 'package:product_au/screens/home/product_details_screen.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/product.dart';
@@ -105,17 +107,36 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
 
-        actions: [
+      actions: [
           IconButton(
             onPressed: () {
-              context.read<ProductProvider>().refresh();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      const FavoritesScreen(),
+                ),
+              );
             },
-            tooltip: 'Refresh',
+            tooltip: 'Favorites',
             icon: const Icon(
-              Icons.refresh_rounded,
-              color: Color(0xFF222222),
+              Icons.favorite_border_rounded,
+              color: Color(0xFFE45A72),
             ),
           ),
+
+          // IconButton(
+          //   onPressed: () {
+          //     context
+          //         .read<ProductProvider>()
+          //         .refresh();
+          //   },
+          //   tooltip: 'Refresh',
+          //   icon: const Icon(
+          //     Icons.refresh_rounded,
+          //     color: Color(0xFF222222),
+          //   ),
+          // ),
 
           const SizedBox(width: 4),
 
@@ -355,10 +376,13 @@ class _HomePageState extends State<HomePage> {
             );
 
             return RefreshIndicator(
-              onRefresh: provider.refresh,
-
-              color: const Color(0xFF6C4AB6),
-
+                onRefresh: () async {
+    await provider.refresh();
+  },
+  color: const Color(0xFF6C4AB6),
+  backgroundColor: Colors.white,
+  displacement: 50,
+  edgeOffset: 0,
               child: CustomScrollView(
                 physics:
                     const AlwaysScrollableScrollPhysics(),
@@ -383,18 +407,48 @@ class _HomePageState extends State<HomePage> {
                         final product =
                             provider.products[index];
 
-                        return _ProductCard(
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ProductDetailsScreen(
+                                productId: product.id,
+                              ),
+                            ),
+                          );
+                        },
+                        child: _ProductCard(
                           product: product,
-                          isFavorite:
-                              provider.isFavorite(
+                          isFavorite: provider.isFavorite(
                             product.id,
                           ),
-                          onFavorite: () {
-                            provider.toggleFavorite(
-                              product.id,
-                            );
-                          },
-                        );
+                         onFavorite: () {
+                          final bool wasFavorite =
+                              provider.isFavorite(product.id);
+
+                          provider.toggleFavorite(product.id);
+
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                wasFavorite
+                                    ? 'Removed from favorites'
+                                    : 'Added to favorites',
+                              ),
+                              duration: const Duration(seconds: 2),
+                              behavior: SnackBarBehavior.floating,
+                              margin: const EdgeInsets.all(16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          );
+                        },
+                        ),
+                      );
                       },
                       childCount:
                           provider.products.length,
